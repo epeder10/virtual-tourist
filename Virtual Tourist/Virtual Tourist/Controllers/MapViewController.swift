@@ -17,8 +17,10 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
     var longPress: UILongPressGestureRecognizer?
     var dataController:DataController!
     var currentLocation: CurrentLocation?
+    var pinLocation: CLLocationCoordinate2D?
     
     var fetchedResultsController:NSFetchedResultsController<CurrentLocation>!
+    var fetchedPinsResultsController:NSFetchedResultsController<Pins>!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,6 +30,149 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
         longPress = UILongPressGestureRecognizer(target: self, action: #selector(MapViewController.handleLongPressOnMap(_:)))
         longPress?.minimumPressDuration = 1.5
         
+        if let longPress = longPress {
+            mapView.addGestureRecognizer(longPress)
+        }
+        
+        loadCurrentLocation()
+        reloadAllPins()
+    }
+    
+    @objc func handleLongPressOnMap(_ recognizer: UIGestureRecognizer){
+        if recognizer.state == .began {
+            let touchedAt = recognizer.location(in: self.mapView) // adds the location on the view it was pressed
+            let touchedAtCoordinate : CLLocationCoordinate2D = self.mapView.convert(touchedAt, toCoordinateFrom: self.mapView) // will get coordinates
+            let location: CLLocation = CLLocation(latitude: touchedAtCoordinate.latitude, longitude: touchedAtCoordinate.longitude)
+            
+            fetchCityAndCountry(from: location) { city, country, error in
+                guard let city = city, let country = country, error == nil else { return }
+                print(city + ", " + country)  // Rio de Janeiro, Brazil
+                let annotation = MKPointAnnotation()
+                annotation.coordinate = touchedAtCoordinate
+                let locationName:String = "\(city), \(country)"
+                annotation.title = locationName
+                self.mapView.addAnnotation(annotation)
+                
+                self.savePin(touchedAtCoordinate, locationName: locationName)
+            }
+            
+            //Reset this recognizer to get ready for another event
+            recognizer.state = .ended
+        }
+    }
+    
+    private func savePin(_ touchedAtCoordinate: CLLocationCoordinate2D, locationName: String){
+        let pin = Pins(context: dataController.viewContext)
+        pin.latitude = touchedAtCoordinate.latitude
+        pin.longitude = touchedAtCoordinate.longitude
+        pin.locationName = locationName
+    }
+    
+    // MARK: - MKMapViewDelegate
+    
+    // Here we create a view with a "right callout accessory view". You might choose to look into other
+    // decoration alternatives. Notice the similarity between this method and the cellForRowAtIndexPath
+    // method in TableViewDataSource.
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        
+        let reuseId = "pin"
+        
+        var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
+        
+        if pinView == nil {
+            pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
+            pinView!.canShowCallout = true
+            pinView!.pinTintColor = .red
+            pinView!.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
+        }
+        else {
+            pinView!.annotation = annotation
+        }
+        
+        return pinView
+    }
+    
+    // This delegate method is implemented to respond to taps. It opens the system browser
+    // to the URL specified in the annotationViews subtitle property.
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        if let coord = view.annotation?.coordinate {
+            pinLocation = coord
+            self.performSegue(withIdentifier: "showImages", sender: self)
+        }
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let confirmController = segue.destination as! LocationViewController
+        confirmController.pinLocation = self.pinLocation
+    }
+    
+    /*
+     Delegate method to respond to map view changes
+    */
+    func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+        if currentLocation == nil {
+            self.currentLocation = CurrentLocation(context: dataController.viewContext)
+        }
+        if let current = self.currentLocation {
+            let location = self.mapView.region
+            current.longitude = location.center.longitude
+            current.latitude = location.center.latitude
+            current.spanLatitude = location.span.latitudeDelta
+            current.spanLongitude = location.span.longitudeDelta
+        }
+    }
+    
+    func fetchCityAndCountry(from location: CLLocation, completion: @escaping (_ city: String?, _ country:  String?, _ error: Error?) -> ()) {
+        CLGeocoder().reverseGeocodeLocation(location) { placemarks, error in
+            completion(placemarks?.first?.locality,
+                       placemarks?.first?.country,
+                       error)
+        }
+    }
+    /*
+     func mapView(mapView: MKMapView, annotationView: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+     
+     if control == annotationView.rightCalloutAccessoryView {
+     let app = UIApplication.sharedApplication()
+     app.openURL(NSURL(string: annotationView.annotation.subtitle))
+     }
+     }*/
+    
+    /*
+     Reload all pins
+    */
+    private func reloadAllPins(){
+        let fetchRequest:NSFetchRequest<Pins> = Pins.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(key: "latitude", ascending: false)
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        fetchedPinsResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
+        fetchedPinsResultsController.delegate = self
+        do {
+            try fetchedPinsResultsController.performFetch()
+        } catch {
+            fatalError("The fetch could not be performed: \(error.localizedDescription)")
+        }
+        
+        if let results = try? dataController.viewContext.fetch(fetchRequest) {
+            var annotations = [MKAnnotation]()
+            if results.count > 0 {
+                for result in results {
+                    let annotation = MKPointAnnotation()
+                    let location = CLLocationCoordinate2D(latitude: result.latitude, longitude: result.longitude)
+                    annotation.coordinate = location
+                    annotation.title = result.locationName
+                    annotations.append(annotation)
+                }
+            }
+            self.mapView.addAnnotations(annotations)
+        }
+    }
+    
+    /*
+     The maps current location persists between sessions.
+     Load the past current location.
+    */
+    private func loadCurrentLocation() {
         let fetchRequest:NSFetchRequest<CurrentLocation> = CurrentLocation.fetchRequest()
         let sortDescriptor = NSSortDescriptor(key: "latitude", ascending: false)
         fetchRequest.sortDescriptors = [sortDescriptor]
@@ -50,90 +195,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
                 }
             }
         }
-        
-        if let longPress = longPress {
-            mapView.addGestureRecognizer(longPress)
-        }
     }
-    
-    @objc func handleLongPressOnMap(_ recognizer: UIGestureRecognizer){
-        if recognizer.state == .began {
-            let touchedAt = recognizer.location(in: self.mapView) // adds the location on the view it was pressed
-            let touchedAtCoordinate : CLLocationCoordinate2D = self.mapView.convert(touchedAt, toCoordinateFrom: self.mapView) // will get coordinates
-
-            let annotation = MKPointAnnotation()
-            print("\(touchedAtCoordinate)")
-            annotation.coordinate = touchedAtCoordinate
-            annotation.title = "This is cool"
-            self.mapView.addAnnotation(annotation)
-            
-            //Reset this recognizer to get ready for another event
-            recognizer.state = .ended
-        }
-    }
-    
-    // MARK: - MKMapViewDelegate
-    
-    // Here we create a view with a "right callout accessory view". You might choose to look into other
-    // decoration alternatives. Notice the similarity between this method and the cellForRowAtIndexPath
-    // method in TableViewDataSource.
-    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        
-        let reuseId = "pin"
-        
-        var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
-        
-        if pinView == nil {
-            pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
-            pinView!.canShowCallout = true
-            pinView!.pinTintColor = .red
-            //let label = UILabel()
-            //label.text = annotation.subtitle ?? ""
-            //pinView!.detailCalloutAccessoryView = label
-            pinView!.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
-        }
-        else {
-            pinView!.annotation = annotation
-        }
-        
-        return pinView
-    }
-    
-    // This delegate method is implemented to respond to taps. It opens the system browser
-    // to the URL specified in the annotationViews subtitle property.
-    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-        //if control == view.rightCalloutAccessoryView {
-        if let toOpen = view.annotation?.subtitle! {
-            if let url = URL(string: toOpen) {
-                UIApplication.shared.open(url, options: [:], completionHandler: nil)
-            }
-        }
-    }
-    
-    /*
-     Delegate method to respond to map view changes
-    */
-    func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
-        if currentLocation == nil {
-            self.currentLocation = CurrentLocation(context: dataController.viewContext)
-        }
-        if let current = self.currentLocation {
-            let location = self.mapView.region
-            current.longitude = location.center.longitude
-            current.latitude = location.center.latitude
-            current.spanLatitude = location.span.latitudeDelta
-            current.spanLongitude = location.span.longitudeDelta
-        }
-    }
-    /*
-     func mapView(mapView: MKMapView, annotationView: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-     
-     if control == annotationView.rightCalloutAccessoryView {
-     let app = UIApplication.sharedApplication()
-     app.openURL(NSURL(string: annotationView.annotation.subtitle))
-     }
-     }*/
-    
     
     
 }

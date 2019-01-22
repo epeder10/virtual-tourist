@@ -37,6 +37,15 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         loadPin()
         loadImages()
         
+        centerMapOnPin()
+        
+        loadNewImages()
+    }
+    
+    /*
+     Center the map on the pin that was selected by the user
+    */
+    func centerMapOnPin() {
         var annotations = [MKPointAnnotation]()
         
         let annotation = MKPointAnnotation()
@@ -45,7 +54,12 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         self.mapView.addAnnotations(annotations)
         
         self.mapView.showAnnotations(annotations, animated: true)
-        
+    }
+    
+    /*
+     If images.count == 0 then this pin has no images.  Start a new connection to Flickr and get images.
+    */
+    func loadNewImages() {
         if images.count == 0 {
             if let pin = pinLocation {
                 FlickerClient.getImagesByLatLong(lat: pin.latitude, long: pin.longitude, date: getDate(), page: page, completion: getImagesCompletionHandler(data:error:))
@@ -55,10 +69,14 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         }
     }
     
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return images.count
     }
     
+    /*
+     Dynamically determine the size of each image
+    */
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let cellsAcross: CGFloat = 3
         let width = self.collectionView.bounds.width - 20
@@ -84,7 +102,7 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
     }
 
     /*
-     User has clicked an image.  Remove it and get another image
+     User has clicked an image.  Remove it.
     */
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath:IndexPath) {
         images.remove(at: indexPath.row)
@@ -94,6 +112,10 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         collectionView.reloadData()
     }
     
+    /*
+     Called when the getImages request completes.
+     Iterate over each image from the getImages request and get each image
+    */
     private func getImagesCompletionHandler(data: [JSON], error: Error?){
         if data.count > 0 {
             for photo in data {
@@ -108,7 +130,10 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         newCollectionButton.isEnabled = true
     }
     
-    func photoCompletionHandler(data: Data?, error: Error?) {
+    /*
+     A single image download has completed
+    */
+    private func photoCompletionHandler(data: Data?, error: Error?) {
         if let data = data {
             print("Photo download success")
             let image = saveImage(imageData: data)
@@ -119,6 +144,9 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         }
     }
     
+    /*
+     Convert the image from Flickr to the internal data model
+    */
     private func saveImage(imageData: Data) -> Image{
         let image = Image(context: dataController.viewContext)
         image.imageData = imageData
@@ -127,6 +155,9 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         return image
     }
     
+    /*
+     New Collection button action.  Gets new images from the next page
+    */
     @IBAction func getNewCollectionButton(_ sender: Any) {
         images = [Image]()
         page += 1
@@ -136,6 +167,9 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         }
     }
     
+    /*
+     Get the data from exactly a month ago.
+    */
     private func getDate() -> String {
         let monthsToAdd = -1
         let daysToAdd = 1
@@ -149,7 +183,6 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         let futureDate = Calendar.current.date(byAdding: dateComponent, to: currentDate)
         
         let formatter = DateFormatter()
-        // initially set the format based on your datepicker date / server String
         formatter.dateFormat = "yyyy-MM-dd"
         
         if let futureDate = futureDate {
@@ -161,7 +194,7 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
     /*
      Get all images
      */
-    func loadImages() {
+    private func loadImages() {
         let fetchRequest:NSFetchRequest<Image> = Image.fetchRequest()
         if let pin = pin {
             let predicate = NSPredicate(format: "pin == %@", pin)
@@ -189,7 +222,7 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
     /*
     Get current pin
     */
-    func loadPin() {
+    private func loadPin() {
         let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
         let predicate = NSPredicate(format: "longitude == %@ AND latitude == %@", argumentArray: [pinLocation.longitude, pinLocation.latitude])
         fetchRequest.predicate = predicate

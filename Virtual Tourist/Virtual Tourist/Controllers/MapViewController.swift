@@ -38,6 +38,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
         reloadAllPins()
     }
     
+    /*
+     Long press creates a new pin.
+    */
     @objc func handleLongPressOnMap(_ recognizer: UIGestureRecognizer){
         if recognizer.state == .began {
             let touchedAt = recognizer.location(in: self.mapView) // adds the location on the view it was pressed
@@ -61,6 +64,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
         }
     }
     
+    /*
+     User added a new pin.  Save it in the data model
+    */
     private func savePin(_ touchedAtCoordinate: CLLocationCoordinate2D, locationName: String){
         let pin = Pin(context: dataController.viewContext)
         pin.latitude = touchedAtCoordinate.latitude
@@ -70,11 +76,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
         pin.page = 1
     }
     
-    // MARK: - MKMapViewDelegate
-    
-    // Here we create a view with a "right callout accessory view". You might choose to look into other
-    // decoration alternatives. Notice the similarity between this method and the cellForRowAtIndexPath
-    // method in TableViewDataSource.
+   /*
+     Map view
+    */
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         
         let reuseId = "pin"
@@ -94,8 +98,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
         return pinView
     }
     
-    // This delegate method is implemented to respond to taps. It opens the system browser
-    // to the URL specified in the annotationViews subtitle property.
+    /*
+     A user tapped on a pin.  Show the location and info disclosure
+    */
     func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
         if let coord = view.annotation?.coordinate {
             pinLocation = coord
@@ -103,10 +108,13 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
         }
     }
     
+    /*
+     Prepare for a segue to the Location view controller
+     */
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        let confirmController = segue.destination as! LocationViewController
-        confirmController.pinLocation = self.pinLocation
-        confirmController.dataController = self.dataController
+        let locationController = segue.destination as! LocationViewController
+        locationController.pinLocation = self.pinLocation
+        locationController.dataController = self.dataController
     }
     
     /*
@@ -125,6 +133,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
         }
     }
     
+    /*
+     Convert lat and long to city name and county
+    */
     func fetchCityAndCountry(from location: CLLocation, completion: @escaping (_ city: String?, _ country:  String?, _ error: Error?) -> ()) {
         CLGeocoder().reverseGeocodeLocation(location) { placemarks, error in
             completion(placemarks?.first?.locality,

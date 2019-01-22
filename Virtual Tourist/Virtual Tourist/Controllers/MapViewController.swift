@@ -20,7 +20,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
     var pinLocation: CLLocationCoordinate2D?
     
     var fetchedResultsController:NSFetchedResultsController<CurrentLocation>!
-    var fetchedPinsResultsController:NSFetchedResultsController<Pins>!
+    var fetchedPinsResultsController:NSFetchedResultsController<Pin>!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -62,10 +62,12 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
     }
     
     private func savePin(_ touchedAtCoordinate: CLLocationCoordinate2D, locationName: String){
-        let pin = Pins(context: dataController.viewContext)
+        let pin = Pin(context: dataController.viewContext)
         pin.latitude = touchedAtCoordinate.latitude
         pin.longitude = touchedAtCoordinate.longitude
         pin.locationName = locationName
+        pin.numOfImages = 21
+        pin.page = 1
     }
     
     // MARK: - MKMapViewDelegate
@@ -104,6 +106,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let confirmController = segue.destination as! LocationViewController
         confirmController.pinLocation = self.pinLocation
+        confirmController.dataController = self.dataController
     }
     
     /*
@@ -129,20 +132,12 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
                        error)
         }
     }
-    /*
-     func mapView(mapView: MKMapView, annotationView: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-     
-     if control == annotationView.rightCalloutAccessoryView {
-     let app = UIApplication.sharedApplication()
-     app.openURL(NSURL(string: annotationView.annotation.subtitle))
-     }
-     }*/
     
     /*
      Reload all pins
     */
     private func reloadAllPins(){
-        let fetchRequest:NSFetchRequest<Pins> = Pins.fetchRequest()
+        let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
         let sortDescriptor = NSSortDescriptor(key: "latitude", ascending: false)
         fetchRequest.sortDescriptors = [sortDescriptor]
         fetchedPinsResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)

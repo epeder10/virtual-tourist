@@ -132,6 +132,9 @@
                                             <constraint firstAttribute="height" relation="lessThanOrEqual" constant="30" id="l2z-pk-hM7"/>
                                         </constraints>
                                         <state key="normal" title="New Collection"/>
+                                        <connections>
+                                            <action selector="getNewCollectionButton:" destination="Jdf-Td-ttc" eventType="touchUpInside" id="cwv-e1-4nA"/>
+                                        </connections>
                                     </button>
                                 </subviews>
                             </stackView>

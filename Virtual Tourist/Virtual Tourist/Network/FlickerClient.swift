@@ -26,7 +26,7 @@ class FlickerClient {
         var stringValue: String {
             switch self {
             //case .getPhotosByLocation(let lat, let long): return Endpoints.base + "?method=flickr.photos.search&api_key=\(Auth.apiKey)&lat=\(lat)&long=\(long)&min_upload_date=2018-01-01%2000:00:00.000000&format=json&per_page=15&page=1&nojsoncallback=1"
-            case .getPhotosByLocation(let lat, let long, let date, let page): return Endpoints.base + "?method=flickr.photos.search&api_key=\(Auth.apiKey)&lat=\(lat)&lon=\(long)&max_upload_date=\(date)&format=json&per_page=102&page=1&page=\(page)&safe_search=1&radius=2&nojsoncallback=1"
+            case .getPhotosByLocation(let lat, let long, let date, let page): return Endpoints.base + "?method=flickr.photos.search&api_key=\(Auth.apiKey)&lat=\(lat)&lon=\(long)&max_upload_date=\(date)&format=json&per_page=21&page=1&page=\(page)&safe_search=1&radius=2&nojsoncallback=1"
             case .getPhoto(let farmId, let serverId, let id, let secret): return "https://farm\(farmId).staticflickr.com/\(serverId)/\(id)_\(secret).jpg"
             }
         }

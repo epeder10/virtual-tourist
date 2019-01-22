@@ -9,18 +9,19 @@
     <entity name="Image" representedClassName="Image" syncable="YES" codeGenerationType="class">
         <attribute name="imageData" optional="YES" attributeType="Binary" syncable="YES"/>
         <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
-        <relationship name="pin" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Pins" inverseName="images" inverseEntity="Pins" syncable="YES"/>
+        <relationship name="pin" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Pin" inverseName="images" inverseEntity="Pin" syncable="YES"/>
     </entity>
-    <entity name="Pins" representedClassName="Pins" syncable="YES" codeGenerationType="class">
+    <entity name="Pin" representedClassName="Pin" syncable="YES" codeGenerationType="class">
         <attribute name="latitude" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="locationName" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="longitude" optional="YES" attributeType="Double" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="numOfImages" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="page" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <relationship name="images" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Image" inverseName="pin" inverseEntity="Image" syncable="YES"/>
     </entity>
     <elements>
         <element name="CurrentLocation" positionX="-208.046875" positionY="15.578125" width="128" height="105"/>
-        <element name="Image" positionX="118.3671875" positionY="3.64453125" width="128" height="88"/>
-        <element name="Pins" positionX="-61.04296875" positionY="-11.77734375" width="128" height="120"/>
+        <element name="Image" positionX="132.12890625" positionY="17.62890625" width="128" height="88"/>
+        <element name="Pin" positionX="-61.04296875" positionY="-11.77734375" width="128" height="133"/>
     </elements>
 </model>

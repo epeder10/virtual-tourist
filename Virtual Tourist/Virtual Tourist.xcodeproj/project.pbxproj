@@ -219,17 +219,9 @@
 			isa = PBXGroup;
 			children = (
 				DAAA48D221E820D1003BD6C6 /* Responses */,
-				DAAA48D121E820CA003BD6C6 /* Requests */,
 				DAA05F1B21F370AC0070A18B /* FlickerClient.swift */,
 			);
 			path = Network;
-			sourceTree = "<group>";
-		};
-		DAAA48D121E820CA003BD6C6 /* Requests */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Requests;
 			sourceTree = "<group>";
 		};
 		DAAA48D221E820D1003BD6C6 /* Responses */ = {

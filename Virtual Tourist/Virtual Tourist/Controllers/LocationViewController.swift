@@ -105,10 +105,10 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
      User has clicked an image.  Remove it.
     */
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath:IndexPath) {
-        images.remove(at: indexPath.row)
-        pin?.numOfImages -= 1
         let noteToDelete = images[indexPath.row]
         dataController.viewContext.delete(noteToDelete)
+        try? dataController.viewContext.save()
+        images.remove(at: indexPath.row)
         collectionView.reloadData()
     }
     

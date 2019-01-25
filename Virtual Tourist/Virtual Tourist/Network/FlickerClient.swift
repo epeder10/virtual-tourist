@@ -63,14 +63,14 @@ class FlickerClient {
         })
     }
     
-    class func getPhoto(farmId: Int, serverId: String, id: String, secret: String, completion: @escaping(Data?, Error?) -> Void) {
-        Alamofire.request(Endpoints.getPhoto(String(farmId), serverId, id, secret).url).responseData { (response) in
+    class func getPhoto(url: URL, index: Int, completion: @escaping(Data?, Int?, Error?) -> Void) {
+        Alamofire.request(url).responseData { (response) in
             print("Request: \(String(describing: response.request))")
             if response.error != nil {
-                completion(nil, response.error)
+                completion(nil, index, response.error)
             } else {
                 if let data = response.data {
-                    completion(data, nil)
+                    completion(data, index,  nil)
                 }
             }
         }

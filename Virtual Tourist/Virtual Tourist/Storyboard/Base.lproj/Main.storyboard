@@ -82,7 +82,6 @@
                                         <rect key="frame" x="0.0" y="181.5" width="375" height="25"/>
                                         <constraints>
                                             <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="25" id="ADe-20-ga9"/>
-                                            <constraint firstAttribute="height" relation="lessThanOrEqual" constant="30" id="IYx-RB-ABB"/>
                                         </constraints>
                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                         <nil key="textColor"/>
@@ -110,13 +109,13 @@
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <subviews>
                                                         <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="82t-EG-N7t">
-                                                            <rect key="frame" x="-14" y="-9" width="126" height="120"/>
+                                                            <rect key="frame" x="-14" y="-9" width="255" height="240"/>
                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                         </imageView>
                                                     </subviews>
                                                 </view>
                                                 <connections>
-                                                    <outlet property="flickerImage" destination="82t-EG-N7t" id="qj4-Rb-ksh"/>
+                                                    <outlet property="flickerImage" destination="82t-EG-N7t" id="60S-M0-qM3"/>
                                                 </connections>
                                             </collectionViewCell>
                                         </cells>

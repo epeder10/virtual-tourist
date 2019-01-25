@@ -7,8 +7,8 @@
         <attribute name="spanLongitude" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
     </entity>
     <entity name="Image" representedClassName="Image" syncable="YES" codeGenerationType="class">
-        <attribute name="imageData" optional="YES" attributeType="Binary" syncable="YES"/>
-        <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="imageData" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES" syncable="YES"/>
+        <attribute name="url" optional="YES" attributeType="URI" syncable="YES"/>
         <relationship name="pin" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Pin" inverseName="images" inverseEntity="Pin" syncable="YES"/>
     </entity>
     <entity name="Pin" representedClassName="Pin" syncable="YES" codeGenerationType="class">
@@ -21,7 +21,7 @@
     </entity>
     <elements>
         <element name="CurrentLocation" positionX="-208.046875" positionY="15.578125" width="128" height="105"/>
-        <element name="Image" positionX="132.12890625" positionY="17.62890625" width="128" height="88"/>
+        <element name="Image" positionX="132.12890625" positionY="17.62890625" width="128" height="90"/>
         <element name="Pin" positionX="-61.04296875" positionY="-11.77734375" width="128" height="133"/>
     </elements>
 </model>

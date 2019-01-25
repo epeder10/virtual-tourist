@@ -17,7 +17,7 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
     @IBOutlet weak var collectionView: UICollectionView!
     @IBOutlet weak var noImagesFoundLabel: UILabel!
     @IBOutlet weak var newCollectionButton: UIButton!
-    
+
     var dataController:DataController!
     var images = [Image]()
     var page: Int = 1
@@ -41,7 +41,7 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         
         loadNewImages()
     }
-    
+
     /*
      Center the map on the pin that was selected by the user
     */
@@ -94,13 +94,25 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
                 cell.flickerImage?.image = UIImage(data: imageData)
             } else {
                 cell.flickerImage?.image = UIImage(named: "camera-flash")
+                if let url = image.url {
+                    FlickerClient.getPhoto(url: url, index: indexPath.row, completion: photoCompletionHandler(data:index:error:))
+                }
             }
-        }else {
-            cell.flickerImage?.image = UIImage(named: "camera-flash")
         }
         return cell
     }
 
+    /*
+     Check if all images have downloaded
+    */
+    private func checkAllImagesDownloaded() {
+        for image in images {
+            if image.imageData == nil {
+                return
+            }
+        }
+        newCollectionButton.isEnabled = true
+    }
     /*
      User has clicked an image.  Remove it.
     */
@@ -119,38 +131,40 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
     private func getImagesCompletionHandler(data: [JSON], error: Error?){
         if data.count > 0 {
             for photo in data {
-                print(photo)
                 if let farm = photo["farm"].int, let server = photo["server"].string, let id = photo["id"].string, let secret = photo["secret"].string {
-                    FlickerClient.getPhoto(farmId: farm, serverId: server, id: id, secret: secret, completion: photoCompletionHandler(data:error:))
+                    let imageUrl = FlickerClient.Endpoints.getPhoto(String(farm), server, id, secret).url
+                    images.append(saveImage(url: imageUrl))
+                    collectionView.reloadData()
                 }
             }
         } else {
             noImagesFoundLabel.isHidden = false
         }
-        newCollectionButton.isEnabled = true
     }
     
     /*
      A single image download has completed
     */
-    private func photoCompletionHandler(data: Data?, error: Error?) {
-        if let data = data {
+    private func photoCompletionHandler(data: Data?, index: Int?, error: Error?) {
+        if let data = data, let index = index {
             print("Photo download success")
-            let image = saveImage(imageData: data)
-            images.append(image)
+            let image = images[index]
+            image.imageData = data
             collectionView.reloadData()
         } else {
             print("Photo download failed: \(error?.localizedDescription ?? "" )")
         }
+        checkAllImagesDownloaded()
     }
     
     /*
      Convert the image from Flickr to the internal data model
     */
-    private func saveImage(imageData: Data) -> Image{
+    private func saveImage(url: URL) -> Image{
         let image = Image(context: dataController.viewContext)
-        image.imageData = imageData
+        image.imageData = nil
         image.pin = pin
+        image.url = url
         try? dataController.viewContext.save()
         return image
     }
@@ -159,6 +173,7 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
      New Collection button action.  Gets new images from the next page
     */
     @IBAction func getNewCollectionButton(_ sender: Any) {
+        newCollectionButton.isEnabled = false
         images = [Image]()
         page += 1
         pin?.page = Int32(page)
@@ -218,6 +233,7 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
             }
         }
     }
+
     
     /*
     Get current pin
